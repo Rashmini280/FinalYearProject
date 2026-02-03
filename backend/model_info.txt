@@ -1,0 +1,8 @@
+--- Inspecting Models/fake_news_classifier.pkl ---
+Type: <class 'sklearn.linear_model._logistic.LogisticRegression'>
+Content: LogisticRegression(l1_ratio=None, max_iter=2000, penalty='l2')
+Params: {'C': 1.0, 'class_weight': None, 'dual': False, 'fit_intercept': True, 'intercept_scaling': 1, 'l1_ratio': None, 'max_iter': 2000, 'n_jobs': None, 'penalty': 'l2', 'random_state': None, 'solver': 'lbfgs', 'tol': 0.0001, 'verbose': 0, 'warm_start': False}
+--- Inspecting Models/text_scaler.pkl ---
+Type: <class 'sklearn.preprocessing._data.StandardScaler'>
+Content: StandardScaler()
+Params: {'copy': True, 'with_mean': True, 'with_std': True}

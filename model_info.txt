@@ -1,0 +1,4 @@
+--- Inspecting Models/fake_news_classifier.pkl ---
+Error loading Models/fake_news_classifier.pkl: [Errno 2] No such file or directory: 'Models/fake_news_classifier.pkl'
+--- Inspecting Models/text_scaler.pkl ---
+Error loading Models/text_scaler.pkl: [Errno 2] No such file or directory: 'Models/text_scaler.pkl'
