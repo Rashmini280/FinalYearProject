@@ -3,7 +3,7 @@ import clip
 from PIL import Image
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model,preprocess = clip.load("ViT-B/32", device= device)
+model,preprocess = clip.load("ViT-B/32", device= device) 
 
 def clipsimilarity(image_path:str, text:str)-> float:
     text = text[:200]
@@ -14,10 +14,11 @@ def clipsimilarity(image_path:str, text:str)-> float:
         image_features= model.encode_image(image)
         text_features = model.encode_text(text)
 
+        #normalize the text and image embeddings
         image_features /= image_features.norm(dim=-1, keepdim=True)
         text_features /= text_features.norm(dim=-1, keepdim=True)
 
-        similarity = (image_features @ text_features.T).item()
+        similarity = (image_features @ text_features.T).item() #check whether how the image and text are related to each other.
 
         return similarity
     
@@ -38,7 +39,7 @@ def final_decision(text_probs:dict, clip_sim:float) -> dict:
         
    # Note: (1 - clip_sim) is used because high similarity should decrease the fake score.
     fake_score = (text_probs["fake"] * 0.6) + ((1 - clip_sim) * 0.4)
-
+     #clipsimilarity is weighted at 40% and text-based fake score is weighted at 60% in the final decision. 
     if fake_score > 0.65:
         return {
             "label": "Fake",

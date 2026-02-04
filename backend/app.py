@@ -83,12 +83,5 @@ async def predict_meme(file:UploadFile= File(...)):
         "final_decision": decision
     }
 
-       # ✅ Print ONLY if model says REAL
-    if decision["label"] == "Real":
-        print("====== REAL MEME DETECTED ======")
-        print("TEXT >>>", normalized_text)
-        print("PROBS >>>", text_probs)
-        print("CLIP >>>", clip_sim)
-        print("CONFIDENCE >>>", decision["confidence"])
-        print("================================")
+       
    

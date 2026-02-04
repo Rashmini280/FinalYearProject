@@ -3,9 +3,10 @@ import torch
 import numpy as np
 from transformers import AutoTokenizer,AutoModel
 
+# Load the pre-trained XLM-RoBERTa model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
 text_model = AutoModel.from_pretrained("xlm-roberta-base")
-text_model.eval()
+text_model.eval()# set this to evaluation mode
 
 clf = joblib.load("Models/fake_news_classifier.pkl")
 scaler = joblib.load("Models/text_scaler.pkl")
@@ -24,10 +25,10 @@ def encode_text(text:str)-> np.ndarray:
 
     with torch.no_grad():
         outputs = text_model(**inputs)
-        embedding = outputs.last_hidden_state[:,0,:]
+        embedding = outputs.last_hidden_state[:,0,:] # CLS token embedding for sentence representation
 
         return embedding.cpu().numpy()
-    
+    #predict the probabilities using the loaded classifier and scaler
 def predict_text(text:str)-> dict:
     emb = encode_text(text)
     emb = scaler.transform(emb)

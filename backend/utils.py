@@ -1,4 +1,4 @@
-
+# This prevents over normalization for english words if they are not likely to be singlish and also preserves the case for proper nouns and named entities.
 import re
 
 ENGLISH_STOPWORDS = {

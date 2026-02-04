@@ -1,4 +1,4 @@
-
+#text extraction from facebook memes
 from PIL import Image
 import pytesseract
 

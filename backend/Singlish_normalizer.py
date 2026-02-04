@@ -1,3 +1,4 @@
+# This module defines the ProfessionalNormalizer class, which is responsible for normalizing Singlish text to Sinhala.
 import re
 
 class ProfessionalNormalizer:
