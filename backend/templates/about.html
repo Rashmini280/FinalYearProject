@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>About the Research</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='dashboardstyle.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', path='arrow-left-solid.png') }}">
+</head>
+
+<body>
+<div class="navbar">
+    <h1>FairLanka</h1>
+   <div class="nav-right">
+    <span>Logged in as: {{ request.session.get('username') }}</span>
+    <a href="/logout"><button>Logout</button></a>
+    </div>
+ </div>
+ <a href="/dashboard"><i class="fa-solid fa-arrow-left-long"></i>Back to Dashboard</a>
+ <h1>About My Research</h1>
+
+<div class="card">
+    <h3>Problem Overview</h3>
+    <p>Most fake news detection systems focus mainly on English,while languages like Sinhala are not well studied.Many existing models also analyze text, even though fake news is now often shared through memes that include both text and images.
+    This makes detection harder, especially for languages with less resources. My research aims to create a system that can detect fake news in Singlish (a mix of Sinhala and English) by analyzing both text and images in memes.
+    Extracting text from memes is also difficult becuase OCR tools do not work well with low-quality or complex visuals. In addition, many systems do not properly combine both text and image information when making decisions. Although newer models like CLIP show promise,they have not been widely used for low-resource languages like Sinhala.
+    </p>
+    </p>
+</div>
+
+<div class="card">
+    <h3>Research Gap</h3>
+    <p>While there are many fake news detection systems, most of them focus on English and do not consider the unique challenges of low-resource languages like Sinhala. Additionally, many existing models analyze text and images separately, rather than combining them effectively. This research aims to fill this gap by developing a system that can analyze both text and images in Singlish memes to detect fake news more accurately.
+        Additionally, extracting textual features from images remains difficult, as OCR systems often struggle with low-resolution or visually complex meme content. Current methods also lack effective integration of both textual and visual modalities, often analyzing them seperately rather than jointly.Furthermore, recent models like CLIP  show promise for multimodal learning, their application to low-resource, cross-lingual context such as Sinhala remains insufficiently studied.
+    </p>
+</div>
+
+<div class="card">
+    <h3>My Contribution</h3>
+    <p>This research contributes to the field of fake news detection by addressing the specific challenges of analyzing Singlish memes. By developing a system that combines text and image analysis, this work aims to improve the accuracy of fake news detection in low-resource languages like Sinhala. Additionally, the research explores the potential of using CLIP-based models for multimodal learning in a cross-lingual context.
+        First, a model was trained using the FakeEdit dataset(English), and then fine-tuned using a custom Singlish dataset created from publicly available Facebook posts to better handle local language patterns. A transformer based approach using XLM-R was applied for text classification, where only the classifier layer was unfrozen to improve performance efficiently.In addition, a CLIP model was tested for accuracy and then fine-tuned for image based meme analysis to support multimodal detection.
+        The system avaids traditional methods and relies fully on modern tranformer based techniques for better performance.Furthermore, the accuracy of Tesseract OCR was evaluated to assess its effectiveness in extracting text from meme images.
+    </p>
+</div>
+<div class="comparison">
+  <h3>Comparison of the Existing Models</h3>  
+<image src="{{  url_for('static', path='comparison with Existing models.png')}}" alt="Comparison Image">
+      
+</div>
+<div class="comparison">
+    <h3>Comparison of zero-shot and Fine-tuned Clip Model</h3>
+<image src="{{  url_for('static', path='zeroshotaccuracy.png')}}" alt="Comparison Image"></image> 
+<image src="{{  url_for('static', path='finetunedclipmodel.png')}}" alt="Comparison Image"></image>    
+</div>
+
+
+
+
+<!-- ✅ THIS WAS MISSING -->
+<script src="{{ url_for('static', path='script.js') }}"></script>
+
+</body>
+</html>

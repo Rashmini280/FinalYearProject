@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FairLanka Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='dashboardstyle.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', path='arrow-rotate-left-solid.png') }}">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <h1>FairLanka</h1>
+        <div class="nav-right">
+            <a href="/about"><button>About my Research</button></a>
+            <span>Logged in as: {{ request.session.get('username') }}</span>
+            <a href="/logout"><button>Logout</button></a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <!-- Welcome Bar -->
+        <div class="welcome-bar">
+            <h3>Welcome, {{ request.session.get('username') }}</h3>
+            <a href="/history">
+                <i class="fa-solid fa-arrow-rotate-left"></i> View Detection History
+            </a>
+        </div>
+
+        <h2>Singlish Fake News Detection System</h2>
+
+        <!-- Detection Form -->
+        
+        <form id="detection-form" action="/detect" enctype="multipart/form-data">
+
+            <textarea 
+                name="text_input" 
+                placeholder="Enter Singlish text"
+            ></textarea>
+
+            <input type="file" name="meme">
+
+            <button type="submit">Submit For Detection</button>
+        </form>
+
+        <!-- Results Section -->
+        <div id="result-container" style="display:none;">
+            <div id="result"></div>
+        </div>
+
+    </div>
+
+    <!-- JS (always at bottom) -->
+    <script src="{{ url_for('static', path='script.js') }}"></script>
+
+</body>
+</html>

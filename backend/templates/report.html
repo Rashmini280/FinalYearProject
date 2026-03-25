@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Report</title>
+        <!-- Sinhala Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', path='arrow-left-solid.png') }}">
+
+    <style>
+        body {
+            font-family: "Noto Sans Sinhala", Arial, sans-serif;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .real {
+            color: green;
+        }
+
+        .fake {
+            color: red;
+        }
+        body {
+            background: #f5f7fa;
+        }
+
+        h1 {
+            color: #370d06;
+        }
+
+        .section {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* 🔥 Hide button when printing */
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<a href="/dashboard"><i class="fa-solid fa-arrow-left-long"></i>Back to Dashboard</a>
+
+<body>
+
+    <h1>FairLanka Detection Report</h1>
+
+    <p><span class="label">Date:</span> {{ data.created_at }}</p>
+
+    <p>
+        <span class="label">Prediction:</span>
+        <span class="{{ 'real' if data.prediction == 'Real' else 'fake' }}">
+            {{ data.prediction }}
+        </span>
+    </p>
+
+    <p>
+        <span class="label">Confidence:</span>
+        {{ '%.2f'|format(data.confidence * 100) }}%
+    </p>
+
+    <div class="section">
+        <h3>Input Text:</h3>
+        <p>{{ data.input_text }}</p>
+    </div>
+
+    <div class="section">
+        <h3>OCR Text:</h3>
+        <p>{{ data.ocr_text or "-" }}</p>
+    </div>
+
+    <!-- ✅ Print Button -->
+    <button class="no-print" onclick="window.print()">
+       Download / Save as PDF
+    </button>
+</body>
+<script>
+    window.onload = function() {
+        setTimeout(() => window.print(), 500);
+    };
+</script>
+</html>

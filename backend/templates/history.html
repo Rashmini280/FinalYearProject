@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>History</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='dashboardstyle.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="icon" href="{{ url_for('static', path='arrow-left-solid.png') }}">
+</head>
+
+<body>
+ <div class="navbar">
+    <h1>FairLanka</h1>
+   <div class="nav-right">
+    <span>Logged in as: {{ request.session.get('username') }}</span>
+    <a href="/logout"><button>Logout</button></a>
+    </div>
+ </div>
+<a href="/dashboard"><i class="fa-solid fa-arrow-left-long"></i>Back to Dashboard</a>
+<h2>Your Detection History</h2>
+<div class="table-responsive">
+<table id="history-table">
+    <thead>
+        <tr>
+            <th>Input Text</th>
+            <th>OCR Text</th>
+            <th>Prediction</th>
+            <th>Confidence</th>
+            <th>Date</th>
+            <th>Report</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in history %}
+        <tr>
+            <td>{{ item.input_text }}</td>
+            <td>{{ item.ocr_text | replace('\n', '<br>') | safe }}</td>
+            <td>{{ item.prediction }}</td>
+            <td>{{ '%.2f'|format(item.confidence * 100) }}%</td>
+            <td>{{ item.created_at }}</td>
+            <td>
+                <a href="/view-report?created_at={{ item.created_at }}">
+                   <button>View Report</button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<!-- ✅ THIS WAS MISSING -->
+<script src="{{ url_for('static', path='script.js') }}"></script>
+
+</body>
+</html>
