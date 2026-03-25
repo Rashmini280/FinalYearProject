@@ -1,46 +1,66 @@
-import joblib
 import torch
-import numpy as np
-from transformers import AutoTokenizer,AutoModel
+import torch.nn.functional as F
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-# Load the pre-trained XLM-RoBERTa model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
-text_model = AutoModel.from_pretrained("xlm-roberta-base")
-text_model.eval()# set this to evaluation mode
+# -------------------------
+# CONFIG
+# -------------------------
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+MODEL_NAME = "xlm-roberta-base"
 
-clf = joblib.load("Models/fake_news_classifier.pkl")
-scaler = joblib.load("Models/text_scaler.pkl")
+# Label mapping (VERY IMPORTANT)
+# 0 = Real, 1 = Fake
+LABELS = ["real", "fake"]
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-text_model.to(device)
+# -------------------------
+# LOAD TOKENIZER + MODEL
+# -------------------------
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
-def encode_text(text:str)-> np.ndarray:
+text_model = AutoModelForSequenceClassification.from_pretrained(
+    MODEL_NAME,
+    num_labels=2
+)
+
+# -------------------------
+# LOAD TRAINED WEIGHTS
+# -------------------------
+
+# -----------------------------
+# Load fine-tuned checkpoint (if exists)
+# -----------------------------
+checkpoint_path = "Models/singlish_finetuned_model_best.pth"
+try:
+    text_model.load_state_dict(
+        torch.load(checkpoint_path, map_location=DEVICE),strict=False
+    )
+    print("Fine-tuned Singlish model loaded.")
+except Exception as e:
+    print("⚠️ singlish_finetuned_model_best.pth not found, using base model.")
+    print("Error:", e)
+
+# Move to device + eval mode
+text_model.to(DEVICE)
+text_model.eval()
+
+# -------------------------
+# PREDICTION FUNCTION
+# -------------------------
+def predict_text(text: str) -> dict:
     inputs = tokenizer(
         text,
-        return_tensors ="pt",
-        truncation = True,
-        padding = True,
-        max_length = 256
-    ).to(device)
+        return_tensors="pt",
+        truncation=True,
+        padding=True,
+        max_length=256
+    ).to(DEVICE)
 
     with torch.no_grad():
         outputs = text_model(**inputs)
-        embedding = outputs.last_hidden_state[:,0,:] # CLS token embedding for sentence representation
+        probs = F.softmax(outputs.logits, dim=1).cpu().numpy()[0]
 
-        return embedding.cpu().numpy()
-    #predict the probabilities using the loaded classifier and scaler
-def predict_text(text:str)-> dict:
-    emb = encode_text(text)
-    emb = scaler.transform(emb)
-
-    probs = clf.predict_proba(emb)[0]
-    classes = clf.clases_
-    
-    prob_map = dict(zip(classes,probs))
-
-    return{
-        "real": float(prob_map.get(1,0.0)),
-        "fake" :float(prob_map.get(0,0.0))
-
+    # ✅ CORRECT LABEL MAPPING
+    return {
+        "real": float(probs[0]),   # index 0 → Real
+        "fake": float(probs[1])    # index 1 → Fake
     }
-
