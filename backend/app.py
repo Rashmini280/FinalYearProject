@@ -28,7 +28,7 @@ from utils import selective_singlish_normalize, clean_text
 from starlette.middleware.sessions import SessionMiddleware
 
 from database import add_user,verify_user,save_prediction
-from src.load_model import get_singlish_model, get_clip_model, load_singlish_model, load_clip_model
+from src.load_model import  load_singlish_model, load_clip_model
 
 pdfmetrics.registerFont(TTFont('NotoSansSinhala', 'fonts/NotoSansSinhala-Regular.ttf'))
 
@@ -39,26 +39,23 @@ def get_global_singlish_model():
     global _singlish_model
     if _singlish_model is None:
         _singlish_model = load_singlish_model()
-        print("Singlish model loaded!")
     return _singlish_model
 
 def get_global_clip_model():
     global _clip_model
     if _clip_model is None:
         _clip_model = load_clip_model()
-        print("CLIP model loaded!")
     return _clip_model
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Preload models in a non-blocking way (lazy is still safer)
     import asyncio
     loop = asyncio.get_event_loop()
-    loop.run_in_executor(None, get_singlish_model)
-    loop.run_in_executor(None, get_clip_model)
-    
-    yield  # App starts here
 
+    loop.run_in_executor(None, get_global_singlish_model)
+    loop.run_in_executor(None, get_global_clip_model)
+
+    yield
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
@@ -433,7 +430,7 @@ def view_report(request: Request, created_at: str):
 async def predict_text_only(text: str = Form(...)):
     model = get_global_singlish_model()
     normalized_text = selective_singlish_normalize(clean_text(text), normalizer)
-    t_probs = predict_text(normalized_text,model)
+    t_probs = predict_text(normalized_text,get_global_singlish_model())
     label = "Real" if t_probs["real"] > t_probs["fake"] else "Fake"
     return {"input_text": text, "normalized_text": normalized_text, "text_probs": t_probs, "label": label}
 
@@ -446,8 +443,8 @@ async def predict_meme(file: UploadFile = File(...)):
     try:
         raw_text = extract_text(path)
         normalized_text = selective_singlish_normalize(clean_text(raw_text), normalizer)
-        t_probs = predict_text(normalized_text, get_singlish_model())
-        image_probs = predict_image(path,model)
+        t_probs = predict_text(normalized_text, get_global_singlish_model())
+        image_probs = predict_image(path,get_global_clip_model())
         decision = final_decision(t_probs, image_probs)
         return {
             "ocr_text": raw_text,
