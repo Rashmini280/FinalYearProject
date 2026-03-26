@@ -6,7 +6,7 @@ from fastapi.responses import  HTMLResponse,RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI
-from contextlib import asynccontextmanager
+
 
 
 import shutil, uuid, os
@@ -28,36 +28,10 @@ from utils import selective_singlish_normalize, clean_text
 from starlette.middleware.sessions import SessionMiddleware
 
 from database import add_user,verify_user,save_prediction
-from src.load_model import  load_singlish_model, load_clip_model
 
-pdfmetrics.registerFont(TTFont('NotoSansSinhala', 'fonts/NotoSansSinhala-Regular.ttf'))
 
-_singlish_model = None
-_clip_model = None
 
-def get_global_singlish_model():
-    global _singlish_model
-    if _singlish_model is None:
-        _singlish_model = load_singlish_model()
-    return _singlish_model
-
-def get_global_clip_model():
-    global _clip_model
-    if _clip_model is None:
-        _clip_model = load_clip_model()
-    return _clip_model
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    import asyncio
-    loop = asyncio.get_event_loop()
-
-    loop.run_in_executor(None, get_global_singlish_model)
-    loop.run_in_executor(None, get_global_clip_model)
-
-    yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
 
@@ -428,23 +402,21 @@ def view_report(request: Request, created_at: str):
 
 @app.post("/predict_text")
 async def predict_text_only(text: str = Form(...)):
-    model = get_global_singlish_model()
     normalized_text = selective_singlish_normalize(clean_text(text), normalizer)
-    t_probs = predict_text(normalized_text,get_global_singlish_model())
+    t_probs = predict_text(normalized_text)
     label = "Real" if t_probs["real"] > t_probs["fake"] else "Fake"
     return {"input_text": text, "normalized_text": normalized_text, "text_probs": t_probs, "label": label}
 
 @app.post("/predict")
 async def predict_meme(file: UploadFile = File(...)):
-    model = get_global_clip_model()
     path = f"temp_{uuid.uuid4().hex}.jpg"
     with open(path,"wb") as buffer: 
         shutil.copyfileobj(file.file, buffer)
     try:
         raw_text = extract_text(path)
         normalized_text = selective_singlish_normalize(clean_text(raw_text), normalizer)
-        t_probs = predict_text(normalized_text, get_global_singlish_model())
-        image_probs = predict_image(path,get_global_clip_model())
+        t_probs = predict_text(normalized_text)
+        image_probs = predict_image(path)
         decision = final_decision(t_probs, image_probs)
         return {
             "ocr_text": raw_text,
