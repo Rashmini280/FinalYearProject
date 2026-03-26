@@ -1,66 +1,69 @@
+import os
+import gdown
 import torch
-import torch.nn.functional as F
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import clip
+import torch.nn as nn
+
+# Models info: local path -> Google Drive file ID
+MODELS = {
+    "models/singlish_finetuned_model_best.pth": "1sC3tcliF3UrihtEAnQS5f1YSIavKuIDQ",
+    "models/fine_tuned_clip_best.pth": "1t-n-jHXNbA4QENutWGIZC4aRNNdKUbzg"
+}
+
+# Ensure models folder exists
+os.makedirs("models", exist_ok=True)
+
+_singlish_model = None
+_clip_model = None
+_clip_preprocess = None
+_clip_classifier = None
 
 # -------------------------
-# CONFIG
+# HELPER: Download from Google Drive
 # -------------------------
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-MODEL_NAME = "xlm-roberta-base"
-
-# Label mapping (VERY IMPORTANT)
-# 0 = Real, 1 = Fake
-LABELS = ["real", "fake"]
-
-# -------------------------
-# LOAD TOKENIZER + MODEL
-# -------------------------
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-
-text_model = AutoModelForSequenceClassification.from_pretrained(
-    MODEL_NAME,
-    num_labels=2
-)
+def download_model(path, file_id):
+    """Download model from Google Drive if missing"""
+    if not os.path.exists(path):
+        url = f"https://drive.google.com/uc?id={file_id}"
+        print(f"Downloading {os.path.basename(path)} from Google Drive...")
+        success = gdown.download(url, path, quiet=False)
+        if success is None:
+            raise FileNotFoundError(f"Failed to download {os.path.basename(path)}")
 
 # -------------------------
-# LOAD TRAINED WEIGHTS
+# LOAD SINGLISH MODEL
 # -------------------------
-
-# -----------------------------
-# Load fine-tuned checkpoint (if exists)
-# -----------------------------
-checkpoint_path = "Models/singlish_finetuned_model_best.pth"
-try:
-    text_model.load_state_dict(
-        torch.load(checkpoint_path, map_location=DEVICE),strict=False
-    )
-    print("Fine-tuned Singlish model loaded.")
-except Exception as e:
-    print("⚠️ singlish_finetuned_model_best.pth not found, using base model.")
-    print("Error:", e)
-
-# Move to device + eval mode
-text_model.to(DEVICE)
-text_model.eval()
+def load_singlish_model():
+    global _singlish_model
+    if _singlish_model is None:
+        download_model(
+            "models/singlish_finetuned_model_best.pth",
+            MODELS["models/singlish_finetuned_model_best.pth"]
+        )
+        print("Loading Singlish model...")
+        _singlish_model = torch.load("models/singlish_finetuned_model_best.pth", map_location="cpu")
+    return _singlish_model
 
 # -------------------------
-# PREDICTION FUNCTION
+# LOAD CLIP MODEL + CLASSIFIER
 # -------------------------
-def predict_text(text: str) -> dict:
-    inputs = tokenizer(
-        text,
-        return_tensors="pt",
-        truncation=True,
-        padding=True,
-        max_length=256
-    ).to(DEVICE)
+def load_clip_model():
+    global _clip_model, _clip_preprocess, _clip_classifier
+    if _clip_model is None:
+        download_model(
+            "models/fine_tuned_clip_best.pth",
+            MODELS["models/fine_tuned_clip_best.pth"]
+        )
+        print("Loading CLIP model...")
 
-    with torch.no_grad():
-        outputs = text_model(**inputs)
-        probs = F.softmax(outputs.logits, dim=1).cpu().numpy()[0]
+        # Load base CLIP model
+        _clip_model, _clip_preprocess = clip.load("ViT-B/32", device="cpu")
+        _clip_model.eval()
 
-    # ✅ CORRECT LABEL MAPPING
-    return {
-        "real": float(probs[0]),   # index 0 → Real
-        "fake": float(probs[1])    # index 1 → Fake
-    }
+        # Load classifier
+        _clip_classifier = nn.Linear(_clip_model.visual.output_dim, 2)
+        checkpoint = torch.load("models/fine_tuned_clip_best.pth", map_location="cpu")
+        _clip_classifier.load_state_dict(checkpoint["classifier_state_dict"])
+        _clip_classifier.eval()
+
+    return _clip_model, _clip_classifier, _clip_preprocess
