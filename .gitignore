@@ -32,6 +32,13 @@ wheels/
 *.swo
 *~
 
+# Ignore all PyTorch model files
+*.pth
+
+# Optional: ignore entire models folder
+backend/Models/
+# Ignore all PyTorch model files
+
 # OS
 .DS_Store
 Thumbs.db

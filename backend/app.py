@@ -5,6 +5,7 @@ from fastapi import FastAPI, Form, UploadFile, File,Request
 from fastapi.responses import  HTMLResponse,RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from src.load_model import load_singlish_model, load_clip_model
 
 import shutil, uuid, os
 import sqlite3
@@ -36,6 +37,24 @@ normalizer = ProfessionalNormalizer()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+
+_singlish_model = None
+_clip_model = None
+
+
+def get_singlish_model():
+    global _singlish_model
+    if _singlish_model is None:
+        _singlish_model = load_singlish_model()
+        print("Singlish model loaded!")
+    return _singlish_model
+
+def get_clip_model():
+    global _clip_model
+    if _clip_model is None:
+        _clip_model = load_clip_model()
+        print("Clip model loaded!")
+    return _clip_model
 
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -398,21 +417,23 @@ def view_report(request: Request, created_at: str):
 
 @app.post("/predict_text")
 async def predict_text_only(text: str = Form(...)):
+    model = get_singlish_model()
     normalized_text = selective_singlish_normalize(clean_text(text), normalizer)
-    t_probs = predict_text(normalized_text)
+    t_probs = predict_text(normalized_text,model)
     label = "Real" if t_probs["real"] > t_probs["fake"] else "Fake"
     return {"input_text": text, "normalized_text": normalized_text, "text_probs": t_probs, "label": label}
 
 @app.post("/predict")
 async def predict_meme(file: UploadFile = File(...)):
+    model = get_clip_model
     path = f"temp_{uuid.uuid4().hex}.jpg"
     with open(path,"wb") as buffer: 
         shutil.copyfileobj(file.file, buffer)
     try:
         raw_text = extract_text(path)
         normalized_text = selective_singlish_normalize(clean_text(raw_text), normalizer)
-        t_probs = predict_text(normalized_text)
-        image_probs = predict_image(path)
+        t_probs = predict_text(normalized_text, get_singlish_model())
+        image_probs = predict_image(path,model)
         decision = final_decision(t_probs, image_probs)
         return {
             "ocr_text": raw_text,
