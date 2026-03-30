@@ -1,4 +1,5 @@
 
+
 window.deleteHistory = async function(createdAt) {
     if (!confirm("Are you sure you want to delete this record?")) return;
 
@@ -118,6 +119,3 @@ async function deleteUser(username) {
 
     loadUsers();
 }
-
-
-

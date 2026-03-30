@@ -4,9 +4,9 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
 
-# -------------------------
+
 # CONFIG
-# -------------------------
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_NAME = "xlm-roberta-base"
 
@@ -14,9 +14,9 @@ MODEL_NAME = "xlm-roberta-base"
 # 0 = Real, 1 = Fake
 LABELS = ["real", "fake"]
 
-# -------------------------
+
 # LOAD TOKENIZER + MODEL
-# -------------------------
+
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 text_model = AutoModelForSequenceClassification.from_pretrained(
@@ -24,13 +24,13 @@ text_model = AutoModelForSequenceClassification.from_pretrained(
     num_labels=2
 )
 
-# -------------------------
-# LOAD TRAINED WEIGHTS
-# -------------------------
 
-# -----------------------------
+# LOAD TRAINED WEIGHTS
+
+
+
 # Load fine-tuned checkpoint (if exists)
-# -----------------------------
+
 checkpoint_path = "Models/singlish_finetuned_model_best.pth"
 try:
     text_model.load_state_dict(
@@ -45,9 +45,9 @@ except Exception as e:
 text_model.to(DEVICE)
 text_model.eval()
 
-# -------------------------
+
 # PREDICTION FUNCTION
-# -------------------------
+
 def predict_text(text: str) -> dict:
     inputs = tokenizer(
         text,

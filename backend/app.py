@@ -13,10 +13,7 @@ import shutil, uuid, os
 import sqlite3
 
 from fastapi.responses import FileResponse
-from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
+
 from fastapi.responses import FileResponse
 
 from fastapi import FastAPI, Form, UploadFile, File
@@ -258,6 +255,7 @@ def get_users(request:Request):
     conn.close()
 
     return {"users" : rows}
+
 @app.get("/history", response_class=HTMLResponse)
 async def history_page(request: Request):
     if "username" not in request.session:
@@ -294,80 +292,7 @@ async def history_page(request: Request):
         "history": history
     })
 
-@app.get("/generate-report")
-def generate_report(request: Request, created_at: str):
-    username = request.session.get("username")
-    if not username:
-        return {"error": "Not logged in"}
 
-    # Fetch the record from DB
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT input_text, ocr_text, prediction, confidence, created_at
-        FROM history
-        WHERE username = ? AND created_at = ?
-    """, (username, created_at))
-    row = cursor.fetchone()
-    conn.close()
-
-    if not row:
-        return {"error": "Record not found"}
-
-    # Make sure folder exists
-    os.makedirs("static/reports", exist_ok=True)
-
-    # Sanitize filename
-    safe_created_at = created_at.replace(":", "-").replace(" ", "_")
-    file_path = f"static/reports/report_{safe_created_at}.pdf"
-
-    # Setup PDF
-    doc = SimpleDocTemplate(file_path)
-    styles = getSampleStyleSheet()
-
-    # Sinhala font style
-    sinhala_style = ParagraphStyle(
-        'SinhalaStyle',
-        fontName='NotoSansSinhala',
-        fontSize=12,
-        leading=14
-    )
-
-    content = []
-
-    # Title
-    content.append(Paragraph("FairLanka Detection Report", styles['Title']))
-    content.append(Spacer(1,10))
-
-    # Metadata
-    content.append(Paragraph(f"Date: {row[4]}", styles['Normal']))
-    content.append(Paragraph(f"Prediction: {row[2]}", styles['Normal']))
-    content.append(Paragraph(f"Confidence: {row[3]*100:.2f}%", styles['Normal']))
-    content.append(Spacer(1, 10))
-
-    # Input Text
-    content.append(Paragraph("Input Text:", styles['Heading3']))
-    input_text = row[0] or "-"
-    for line in input_text.splitlines():
-        content.append(Paragraph(line, sinhala_style))
-    content.append(Spacer(1,10))
-
-    # OCR Text
-    content.append(Paragraph("OCR Text:", styles['Heading3']))
-    ocr_text = row[1] or "-"
-    for line in ocr_text.splitlines():
-        content.append(Paragraph(line, sinhala_style))
-    content.append(Spacer(1,10))
-
-    # Build PDF
-    doc.build(content)
-
-    # Return PDF
-    return FileResponse(
-        file_path,
-        filename=f"report_{safe_created_at}.pdf",
-        media_type="application/pdf"
-    )
 @app.get("/view-report", response_class=HTMLResponse)
 def view_report(request: Request, created_at: str):
     username = request.session.get("username")
