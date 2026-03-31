@@ -2,7 +2,7 @@ This project presents a multimodal fake news detection system designed for Singl
 
 
 First, it needs to create a virtual environmanet for the installing the project packages . 
-and after creating python -m venev venev, then venv should be activated . using venv\Scripts\activate .
+and after creating python -m venev venev, then venv should be activated . using .venv\Scripts\activate .
 the required packages can be found in requirements.txt file in the backend folder. to run the backend it is need to direct to the backend and should run uvicorn app:app.
 then to test the backend after running the backend http://127.0.0.1:8000/docs , this helps to test the endpoint of /predict , this one for meme and /predict_text for text.
 
@@ -29,9 +29,9 @@ OCR : Tesseract OCR
 
 First clone the github reporsitory 
 
-create a virtual environment python -m venv venv
+create a virtual environment python -m venv .venv
 
-venv\Scripts\activate
+.venv\Scripts\activate
 
 pip install -r requirements.txt
 
