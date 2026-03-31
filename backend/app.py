@@ -2,14 +2,14 @@ from typing import Optional
 from datetime import datetime
 
 from fastapi import FastAPI, Form, UploadFile, File,Request
-from fastapi.responses import  HTMLResponse,RedirectResponse
+from fastapi.responses import  HTMLResponse,RedirectResponse  #Fastapi response for HTML and redirection
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.templating import Jinja2Templates #To render HTML templates with dynamic data 
 from fastapi import FastAPI
 
 
 
-import shutil, uuid, os
+import shutil, uuid, os #system level operations for hadling file uploads
 import sqlite3
 
 from fastapi.responses import FileResponse
@@ -17,14 +17,14 @@ from fastapi.responses import FileResponse
 from fastapi.responses import FileResponse
 
 from fastapi import FastAPI, Form, UploadFile, File
-from ocr import extract_text
+from ocr import extract_text #importing extract text function from ocr.py
 from singlish_normalizer import ProfessionalNormalizer
 from text_model import predict_text
 from clip_model import predict_image, final_decision
 from utils import selective_singlish_normalize, clean_text
-from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.sessions import SessionMiddleware #for session management login logout
 
-from database import add_user,verify_user,save_prediction
+from database import add_user,verify_user,save_prediction #database management for user authentication and verify
 
 
 
@@ -40,7 +40,7 @@ normalizer = ProfessionalNormalizer()
 
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
-    if "username" in request.session:
+    if "username" in request.session: # role base access to the system if the user is admin then user will redirect to the admin dashboard
         role = request.session.get("role")
 
         if role == "admin":
@@ -50,7 +50,7 @@ async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/register", response_class=HTMLResponse)
-async def register_page(request: Request):
+async def register_page(request: Request): #register page fr new user 
     return templates.TemplateResponse("register.html", {"request": request})
 
 @app.post("/register", response_class=HTMLResponse)
@@ -58,7 +58,7 @@ async def register(request: Request, username: str = Form(...),password: str = F
     success = add_user(username, password)
 
     if success:
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse("/", status_code=303) #if username is already exist the user cannot register
     return templates.TemplateResponse("register.html",{
         "request": request,
         "error": "Username already exists. Try a different one."
@@ -88,19 +88,19 @@ async def logout(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
     if "username" not in request.session:
-        return RedirectResponse("/", status_code=303)
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+        return RedirectResponse("/", status_code=303) #if the user is not loggedin then user will redirect to the login page
+    return templates.TemplateResponse("dashboard.html", {"request": request}) #else return to the dashboard
 
 @app.get("/about", response_class=HTMLResponse)
 async def about(request: Request):
-    return templates.TemplateResponse("about.html", {"request": request})
+    return templates.TemplateResponse("about.html", {"request": request}) #about page 
 
 @app.get("/view-report", response_class=HTMLResponse)
 def view_report(request: Request, created_at: str):
-    username = request.session.get("username")
+    username = request.session.get("username") # users can download the report of predictions
 
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
+    conn = sqlite3.connect("users.db") #connect to the database
+    cursor = conn.cursor() #fetch data from the database
 
     cursor.execute("""
         SELECT input_text, ocr_text, prediction, confidence, created_at
@@ -114,7 +114,7 @@ def view_report(request: Request, created_at: str):
     if not row:
         return HTMLResponse("Report not found")
 
-    return templates.TemplateResponse("report.html", {
+    return templates.TemplateResponse("report.html", { #these will fecth to the report template
         "request": request,
         "data": {
             "input_text": row[0],
@@ -126,7 +126,7 @@ def view_report(request: Request, created_at: str):
     })
 
 
-@app.get("/admin-dashboard", response_class=HTMLResponse)
+@app.get("/admin-dashboard", response_class=HTMLResponse) 
 async def admin_dashboard(request: Request):
     if  request.session.get("role") !="admin":
         return RedirectResponse("/", status_code=303)
@@ -134,7 +134,7 @@ async def admin_dashboard(request: Request):
 
 
 
-@app.get("/admin/user-activity/{username}",response_class=HTMLResponse)
+@app.get("/admin/user-activity/{username}",response_class=HTMLResponse) #admin can view users and handle their user activity
 async def user_activity(request: Request, username: str):
     if request.session.get("role") != "admin":
         return RedirectResponse("/", status_code=303)
@@ -153,7 +153,7 @@ async def user_activity(request: Request, username: str):
     params = [username]
 
     if start_date:
-        query += " AND date(created_at) >= date(?)"
+        query += " AND date(created_at) >= date(?)" # admin is filtering users activity by date
         params.append(start_date)
     if end_date:
         query += " AND date(created_at) <= date(?)"
@@ -185,7 +185,7 @@ async def user_activity(request: Request, username: str):
 
 
 
-@app.get("/admin/history")
+@app.get("/admin/history") # admin can view all users history 
 def get_all_history(request: Request):
     if request.session.get("role") != "admin":
         return {"error": "Unauthorized"}
@@ -215,7 +215,7 @@ def get_all_history(request: Request):
 
     return {"history": history}
 
-@app.delete("/admin/delete-user/{username}")
+@app.delete("/admin/delete-user/{username}") #the function for deleting the users from the system 
 def delete_user(request: Request, username: str):
     if request.session.get("role") != "admin":
         return {"error": "Unauthorized"}
@@ -229,12 +229,12 @@ def delete_user(request: Request, username: str):
 
     return {"message": f"User '{username}' deleted successfully."}
 
-@app.delete("/admin/delete-history/{created_at}")
+@app.delete("/admin/delete-history/{created_at}") #admin can delte the histoory of the user's activities 
 def delete_history(created_at: str, request: Request):
     if request.session.get("role") != "admin":
         return {"error": "Unauthorized"}
 
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("users.db") # loading the users from the database 
     cursor = conn.cursor()
 
     cursor.execute("DELETE FROM history WHERE created_at=?", (created_at,))
@@ -256,7 +256,7 @@ def get_users(request:Request):
 
     return {"users" : rows}
 
-@app.get("/history", response_class=HTMLResponse)
+@app.get("/history", response_class=HTMLResponse) #loading the history of each users
 async def history_page(request: Request):
     if "username" not in request.session:
         return RedirectResponse("/", status_code=303)
@@ -265,9 +265,9 @@ async def history_page(request: Request):
 
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-
+     #fetching the data from the database
     cursor.execute("""
-        SELECT input_text, ocr_text, prediction, confidence, created_at 
+        SELECT input_text, ocr_text, prediction, confidence, created_at  
         FROM history 
         WHERE username = ?
         ORDER BY created_at DESC
@@ -286,14 +286,14 @@ async def history_page(request: Request):
             "created_at": row[4]
         })
 
-    # ✅ PASS history to template
+    # PASS history to template
     return templates.TemplateResponse("history.html", {
         "request": request,
         "history": history
     })
 
 
-@app.get("/view-report", response_class=HTMLResponse)
+@app.get("/view-report", response_class=HTMLResponse) #reports can generate which has history details of the user activities 
 def view_report(request: Request, created_at: str):
     username = request.session.get("username")
     if not username:
@@ -325,18 +325,18 @@ def view_report(request: Request, created_at: str):
         }
     })
 
-@app.post("/predict_text")
+@app.post("/predict_text") #function for predicting the text prediction
 async def predict_text_only(text: str = Form(...)):
     normalized_text = selective_singlish_normalize(clean_text(text), normalizer)
     t_probs = predict_text(normalized_text)
     label = "Real" if t_probs["real"] > t_probs["fake"] else "Fake"
     return {"input_text": text, "normalized_text": normalized_text, "text_probs": t_probs, "label": label}
 
-@app.post("/predict")
+@app.post("/predict") #function for predicting the meme prediction
 async def predict_meme(file: UploadFile = File(...)):
     path = f"temp_{uuid.uuid4().hex}.jpg"
     with open(path,"wb") as buffer: 
-        shutil.copyfileobj(file.file, buffer)
+        shutil.copyfileobj(file.file, buffer)           
     try:
         raw_text = extract_text(path)
         normalized_text = selective_singlish_normalize(clean_text(raw_text), normalizer)
@@ -367,9 +367,9 @@ async def detect(
     image_probs = None
     raw_text = None
 
-    # -------------------------
+    
     # TEXT PROCESSING
-    # -------------------------
+    
     if text_input and text_input.strip() != "":
         normalized_text = selective_singlish_normalize(
             clean_text(text_input),
@@ -383,12 +383,12 @@ async def detect(
         result["text_probs"] = t_probs
         result["text_confidence"] = max(t_probs["fake"], t_probs["real"])
 
-    # -------------------------
+    
     # IMAGE PROCESSING
-    # -------------------------
+    
     if meme and meme.filename != "":
 
-        path = f"temp_{uuid.uuid4().hex}.jpg"
+        path = f"temp_{uuid.uuid4().hex}.jpg" #image is saved temporarily and after the prediction the image will deleted
 
         with open(path, "wb") as buffer:
             shutil.copyfileobj(meme.file, buffer)
@@ -397,11 +397,11 @@ async def detect(
             raw_text = extract_text(path) or ""
 
             normalized_ocr = selective_singlish_normalize(
-                clean_text(raw_text),
+                clean_text(raw_text), #normalizing the text extracted from ocr
                 normalizer
             )
 
-            image_probs = predict_image(path)
+            image_probs = predict_image(path) #predicting the image from clip model
 
             result["image_probs"] = image_probs
             result["ocr_text"] = raw_text
@@ -413,31 +413,31 @@ async def detect(
 
         finally:
             if os.path.exists(path):
-                os.remove(path)
+                os.remove(path) #deleting the image after prediction is done
 
-    # -------------------------
+   
     # FINAL DECISION
-    # -------------------------
+  
     if t_probs or image_probs:
 
         label = None
         confidence = None
 
-        if t_probs and image_probs:
+        if t_probs and image_probs: #if the text and image both probabilities are available final decision made by summation of text and image prediction
             decision = final_decision(t_probs, image_probs)
             label = decision["label"]
-            confidence = decision["confidence"]
+            confidence = decision["confidence"] #final confidence is getting the summartion of text and image analysis probability
             result["final_decision"] = decision
 
         elif t_probs:
-            label = "Real" if t_probs["real"] > t_probs["fake"] else "Fake"
+            label = "Real" if t_probs["real"] > t_probs["fake"] else "Fake" #if only text is available then the final decision is predicted by text prediction resluts 
             confidence = max(t_probs["real"], t_probs["fake"])
 
         elif image_probs:
             label = "Real" if image_probs["real"] > image_probs["fake"] else "Fake"
-            confidence = max(image_probs["real"], image_probs["fake"])
+            confidence = max(image_probs["real"], image_probs["fake"]) #same as text , if only image is available the prediction results will give according to image prediction
 
-        # ✅ FIX: Save for ALL cases
+        #FIX: Save for ALL cases
         save_prediction(
             username=request.session.get("username"),
             input_text=text_input,
@@ -455,13 +455,13 @@ async def detect(
     return result
 
 
-@app.get("/my-history")
+@app.get("/my-history")  #users can view their history of results they got after prediction
 def get_user_history(request: Request):
-    username = request.session.get("username")
+    username = request.session.get("username") # checking user's activities
     if not username:
         return {"error": "Not logged in"}
     
-    conn = sqlite3.connect("users.db")
+    conn = sqlite3.connect("users.db") #fetching the details from database
     cursor = conn.cursor()
     cursor.execute("""
         SELECT input_text, ocr_text, prediction, confidence, created_at 

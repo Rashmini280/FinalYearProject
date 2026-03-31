@@ -1,6 +1,6 @@
 import torch
 
-# Load the file (don't worry, this won't print 1.1GB of text)
+# Load the file 
 state_dict = torch.load('backend/Models/best_model.pth', map_location=torch.device('cpu'))
 
 # Print the "Architecture Keys" (The names of the layers)

@@ -1,5 +1,5 @@
-from datetime import datetime
-import pytz
+from datetime import datetime #save prediction time with srilankan time
+import pytz #to handle timezone 
 import sqlite3
 
 DB_NAME = "users.db"
@@ -16,7 +16,7 @@ def init_db():
     )
     """)
 
-    cursor.execute("PRAGMA table_info(users)")
+    cursor.execute("PRAGMA table_info(users)") #chekcing role column exist in the user table
     columns = [col[1] for col in cursor.fetchall()]
 
     if "role" not in columns:
@@ -37,7 +37,7 @@ def init_db():
     )
     """)
 
-    cursor.execute("SELECT * FROM users WHERE username='admin'")
+    cursor.execute("SELECT * FROM users WHERE username='admin'") #checking first admin user in exist in the database if not then admin user will create
     if not cursor.fetchone():
         cursor.execute(
             "INSERT INTO users(username,password,role) VALUES(?,?,?)",
@@ -90,7 +90,7 @@ def save_prediction(username, input_text, ocr_text, prediction, confidence):
     cursor = conn.cursor()
     cursor.execute("""
     INSERT INTO history (username, input_text, ocr_text, prediction, confidence,created_at) 
-    VALUES (?, ?, ?, ?, ?,?)
+    VALUES (?, ?, ?, ?, ?,?) 
     """, (username, input_text, ocr_text, prediction, confidence,sl_time))
     conn.commit()
     conn.close()

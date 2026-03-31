@@ -1,7 +1,7 @@
 
 
 window.deleteHistory = async function(createdAt) {
-    if (!confirm("Are you sure you want to delete this record?")) return;
+    if (!confirm("Are you sure you want to delete this record?")) return;   //delete history of users function
 
     try {
         const res = await fetch(`/admin/delete-history/${encodeURIComponent(createdAt)}`, {
@@ -9,7 +9,7 @@ window.deleteHistory = async function(createdAt) {
             credentials: "include"
         });
 
-        const data = await res.json();
+        const data = await res.json(); // showing the alert message 
         alert(data.message || "Record deleted");
         loadHistory();
 
@@ -42,14 +42,14 @@ async function loadUsers() {
 
             const row = `
             <tr>
-                <td>${user[0]}</td>
+                <td>${user[0]}</td> //users details are shown in admin page
                 <td>${user[1]}</td>
                 <td> 
                    <button class="delete-btn" onclick="deleteUser('${user[0]}')">Delete</button>
                 </td>
                 <td>
                     <a href="/admin/user-activity/${user[0]}" target="_blank" style="text-decoration: none;">
-                        <button class="activity-btn">User Activity</button>
+                        <button class="activity-btn">User Activity</button>   #to show the user activity
                     </a>
                 </td>              
             </tr>
