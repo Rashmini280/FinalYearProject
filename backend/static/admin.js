@@ -49,7 +49,7 @@ async function loadUsers() {
                 </td>
                 <td>
                     <a href="/admin/user-activity/${user[0]}" target="_blank" style="text-decoration: none;">
-                        <button class="activity-btn">User Activity</button>   #to show the user activity
+                        <button class="activity-btn">User Activity</button>   
                     </a>
                 </td>              
             </tr>
